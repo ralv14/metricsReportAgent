@@ -714,6 +714,14 @@ async function getCardsByVersion(boardLists) {
       card.columnName = list.name;
       card.columnId = list.id;
 
+      // For cards in Done column, fetch the actual move-to-Done date
+      if (list.name.toLowerCase().includes('done')) {
+        const movedDate = await getCardMovedToDoneDate(card.id);
+        if (movedDate) {
+          card.movedToDoneDate = movedDate;
+        }
+      }
+
       if (version) {
         if (!cardsByVersion[version]) {
           cardsByVersion[version] = [];
@@ -739,7 +747,9 @@ function getVersionMetadata(cards) {
     const columnName = card.columnName;
     if (columnName.toLowerCase().includes("done")) {
       statuses["Done"]++;
-      const cardDate = new Date(card.dateLastActivity);
+      // Use movedToDoneDate if available (actual move-to-Done date from action history)
+      // Otherwise fall back to dateLastActivity
+      const cardDate = card.movedToDoneDate ? new Date(card.movedToDoneDate) : new Date(card.dateLastActivity);
       if (!latestDoneDate || cardDate > latestDoneDate) {
         latestDoneDate = cardDate;
       }
