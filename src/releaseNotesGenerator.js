@@ -42,8 +42,7 @@ async function getTrelloBoards() {
 
     return boards;
   } catch (error) {
-    console.error(chalk.red(`❌ Error fetching boards: ${error.message}`));
-    process.exit(1);
+    throw new Error(`Error fetching boards: ${error.message}`);
   }
 }
 
@@ -1177,100 +1176,146 @@ function getStatusLabel(columnName) {
 
 /**
  * Main function
+ * @param {Object} options - Optional configuration object for CI mode
+ *   - type: report type (required in CI mode)
+ *   - board: board name (optional, defaults to "Hunter Luxor Migration")
+ *   - startDate: start date in YYYY-MM-DD format
+ *   - endDate: end date in YYYY-MM-DD format
+ *   - outputDir: output directory (optional, defaults to "reports/")
+ *   - title: report title (optional, defaults to "Annual Report")
  */
-async function generateReleaseNotes() {
+async function generateReleaseNotes(options) {
+  // Determine if running in CI mode
+  const isCIMode = !!options;
+
   try {
-    console.log(chalk.cyan("\n📋 RELEASE NOTES GENERATOR\n"));
 
-    // Check for command-line date arguments
-    const args = process.argv.slice(3);
+    if (!isCIMode) {
+      console.log(chalk.cyan("\n📋 RELEASE NOTES GENERATOR\n"));
+    }
+
     let startDateStr, endDateStr;
+    let reportType;
+    let selectedBoard;
+    let reportTitle;
+    let outputDir = isCIMode ? "reports" : "output/report";
 
-    if (args.length >= 2) {
-      startDateStr = args[0];
-      endDateStr = args[1];
-      console.log(chalk.green(`📅 Using date range from command line: ${startDateStr} to ${endDateStr}\n`));
+    // In CI mode, validate credentials immediately
+    if (isCIMode) {
+      if (!TRELLO_API_KEY || !TRELLO_TOKEN) {
+        throw new Error("Missing Trello API credentials. Please check your .env file.");
+      }
+
+      if (!options.type) {
+        throw new Error("Missing required argument: --type");
+      }
+
+      reportType = options.type;
+      reportTitle = options.title || "Annual Report";
+      outputDir = options.outputDir ? options.outputDir.replace(/\/$/, "") : "reports";
+      startDateStr = options.startDate;
+      endDateStr = options.endDate;
+
+      // Log CI mode startup info
+      console.log(`[CI] Report type: ${reportType}`);
+      console.log(`[CI] Board: ${options.board}`);
+      console.log(`[CI] Output: ${outputDir}`);
     }
 
     // Step 1: Get boards
-    console.log(chalk.yellow("Fetching Trello boards..."));
+    if (!isCIMode) {
+      console.log(chalk.yellow("Fetching Trello boards..."));
+    }
     let boards = await getTrelloBoards();
 
     // Filter out Node BT boards (matches "Node BT", "Node-BT", etc.)
     boards = boards.filter(b => !b.name.match(/Node\s*-?\s*BT/i));
 
     if (boards.length === 0) {
-      console.error(chalk.red("No boards found"));
-      process.exit(1);
+      throw new Error("No boards found");
     }
 
     // Step 2: Select board
-    const { selectedBoard } = await inquirer.prompt([
-      {
-        type: "select",
-        name: "selectedBoard",
-        message: "Select a board:",
-        choices: boards.map(b => ({
-          name: b.name,
-          value: b
-        }))
+    if (isCIMode) {
+      // CI mode: find board by name
+      const boardName = options.board || "Hunter Luxor Migration";
+      selectedBoard = boards.find(b => b.name === boardName);
+      if (!selectedBoard) {
+        throw new Error(`Board not found: ${boardName}`);
       }
-    ]);
-
-    console.log(chalk.green(`✅ Selected: ${selectedBoard.name}\n`));
+      if (!isCIMode) {
+        console.log(chalk.green(`✅ Selected: ${selectedBoard.name}\n`));
+      }
+    } else {
+      // Interactive mode: prompt user
+      const result = await inquirer.prompt([
+        {
+          type: "select",
+          name: "selectedBoard",
+          message: "Select a board:",
+          choices: boards.map(b => ({
+            name: b.name,
+            value: b
+          }))
+        }
+      ]);
+      selectedBoard = result.selectedBoard;
+      console.log(chalk.green(`✅ Selected: ${selectedBoard.name}\n`));
+    }
 
     // Step 2: Get report type
-    const { reportType } = await inquirer.prompt([
-      {
-        type: "select",
-        name: "reportType",
-        message: "Select report type:",
-        choices: [
-          {
-            name: "Date Range Report (Done column)",
-            value: "date-range",
-            description: "All tickets from Done column within date range"
-          },
-          {
-            name: "Release Report (Ready to Release with Release Soon tag)",
-            value: "release-ready",
-            description: "Tickets in Ready to Release with Release Soon tag"
-          },
-          {
-            name: "Pending to Release Report (Ready to Release without Release Soon tag)",
-            value: "pending-release",
-            description: "Tickets in Ready to Release without Release Soon tag"
-          },
-          {
-            name: "Bugs Fixing Report (Bugs from Ready to Release by product)",
-            value: "bugs-by-product",
-            description: "Separate bugs by PRD prefix: FX (Luxor FX) and DX (Luxor DX)"
-          },
-          {
-            name: "Luxor DX Bugs Report (Only DX prefix bugs)",
-            value: "bugs-dx-only",
-            description: "List of all bugs with PRD-DX prefix from Ready to Release"
-          },
-          {
-            name: "Release Version Report (All tickets for one version)",
-            value: "release-version",
-            description: "All tickets for a specific release version"
-          },
-          {
-            name: "Release Version Breakdown (Ticket count per version)",
-            value: "release-version-breakdown",
-            description: "Summary of all versions with ticket counts"
-          }
-        ]
-      }
-    ]);
-
-    console.log(chalk.green(`✅ Report type: ${reportType}\n`));
+    if (!isCIMode) {
+      const result = await inquirer.prompt([
+        {
+          type: "select",
+          name: "reportType",
+          message: "Select report type:",
+          choices: [
+            {
+              name: "Date Range Report (Done column)",
+              value: "date-range",
+              description: "All tickets from Done column within date range"
+            },
+            {
+              name: "Release Report (Ready to Release with Release Soon tag)",
+              value: "release-ready",
+              description: "Tickets in Ready to Release with Release Soon tag"
+            },
+            {
+              name: "Pending to Release Report (Ready to Release without Release Soon tag)",
+              value: "pending-release",
+              description: "Tickets in Ready to Release without Release Soon tag"
+            },
+            {
+              name: "Bugs Fixing Report (Bugs from Ready to Release by product)",
+              value: "bugs-by-product",
+              description: "Separate bugs by PRD prefix: FX (Luxor FX) and DX (Luxor DX)"
+            },
+            {
+              name: "Luxor DX Bugs Report (Only DX prefix bugs)",
+              value: "bugs-dx-only",
+              description: "List of all bugs with PRD-DX prefix from Ready to Release"
+            },
+            {
+              name: "Release Version Report (All tickets for one version)",
+              value: "release-version",
+              description: "All tickets for a specific release version"
+            },
+            {
+              name: "Release Version Breakdown (Ticket count per version)",
+              value: "release-version-breakdown",
+              description: "Summary of all versions with ticket counts"
+            }
+          ]
+        }
+      ]);
+      reportType = result.reportType;
+      console.log(chalk.green(`✅ Report type: ${reportType}\n`));
+    }
 
     // Step 3: Get custom report title (skip for version reports)
-    let reportTitle = "";
-    if (reportType !== "release-version" && reportType !== "release-version-breakdown") {
-      const { title } = await inquirer.prompt([
+    if (!isCIMode && reportType !== "release-version" && reportType !== "release-version-breakdown") {
+      const result = await inquirer.prompt([
         {
           type: "input",
           name: "title",
@@ -1278,8 +1323,14 @@ async function generateReleaseNotes() {
           default: "Annual Report"
         }
       ]);
-      reportTitle = title;
+      reportTitle = result.title;
       console.log(chalk.green(`✅ Report title: ${reportTitle}\n`));
+    } else if (isCIMode && reportTitle === undefined) {
+      reportTitle = options.title || "Annual Report";
+    }
+
+    if (!reportTitle) {
+      reportTitle = "Annual Report";
     }
 
     // Step 4: Get lists and find "Done", "Ready to Release", "Test in Progress", and "Ready to test"
@@ -1291,16 +1342,14 @@ async function generateReleaseNotes() {
     const readyToTestList = lists.find(l => l.name.toLowerCase().includes("ready to test"));
 
     if (!doneList) {
-      console.error(chalk.red("No 'Done' column found"));
-      process.exit(1);
+      throw new Error("No 'Done' column found");
     }
 
     console.log(chalk.green(`✅ Found: ${doneList.name}`));
     if (readyToReleaseList) {
       console.log(chalk.green(`✅ Found: ${readyToReleaseList.name}`));
     } else if (reportType !== "date-range" && reportType !== "release-version" && reportType !== "release-version-breakdown") {
-      console.error(chalk.red("'Ready to Release' column not found. This report type requires it."));
-      process.exit(1);
+      throw new Error("'Ready to Release' column not found. This report type requires it.");
     }
     if (testInProgressList && (reportType === "release-ready" || reportType === "release-version" || reportType === "release-version-breakdown")) {
       console.log(chalk.green(`✅ Found: ${testInProgressList.name}`));
@@ -1310,7 +1359,10 @@ async function generateReleaseNotes() {
     // Step 4: Get date range (only if not provided via command line and needed for date-range report)
     if (reportType === "date-range") {
       if (!startDateStr || !endDateStr) {
-        const { startDateStr: inputStart, endDateStr: inputEnd } = await inquirer.prompt([
+        if (isCIMode) {
+          throw new Error("Missing required arguments for date-range report: --start YYYY-MM-DD and --end YYYY-MM-DD");
+        }
+        const result = await inquirer.prompt([
           {
             type: "input",
             name: "startDateStr",
@@ -1324,20 +1376,24 @@ async function generateReleaseNotes() {
             default: new Date().toISOString().split("T")[0]
           }
         ]);
-        startDateStr = inputStart;
-        endDateStr = inputEnd;
+        startDateStr = result.startDateStr;
+        endDateStr = result.endDateStr;
+      }
+      if (!isCIMode) {
+        console.log(chalk.green(`✅ Date range: ${startDateStr} to ${endDateStr}\n`));
       }
     } else {
       // For release/pending reports, use today's date for display
       startDateStr = new Date().toISOString().split("T")[0];
       endDateStr = new Date().toISOString().split("T")[0];
+      if (!isCIMode) {
+        console.log(chalk.green(`✅ Date range: ${startDateStr} to ${endDateStr}\n`));
+      }
     }
 
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     endDate.setHours(23, 59, 59, 999);
-
-    console.log(chalk.green(`✅ Date range: ${startDateStr} to ${endDateStr}\n`));
 
     // Step 5: Fetch cards based on report type
     let filteredDoneCards = [];
@@ -1372,17 +1428,20 @@ async function generateReleaseNotes() {
 
         const timestamp = new Date().toISOString().split("T")[0];
         const filename = `report_release_version_v${selectedVersion}_${selectedBoard.name.replace(/\s+/g, "_")}_${timestamp}.html`;
-        const filepath = path.join(process.cwd(), "output", "report", filename);
+        const filepath = path.join(process.cwd(), outputDir, filename);
 
-        if (!fs.existsSync(path.join(process.cwd(), "output", "report"))) {
-          fs.mkdirSync(path.join(process.cwd(), "output", "report"), { recursive: true });
+        if (!fs.existsSync(path.join(process.cwd(), outputDir))) {
+          fs.mkdirSync(path.join(process.cwd(), outputDir), { recursive: true });
         }
 
         fs.writeFileSync(filepath, versionHtml);
 
-        console.log(chalk.green(`\n✅ Report generated!\n`));
-        console.log(chalk.cyan(`📄 File: output/report/${filename}`));
-        console.log(chalk.cyan(`📊 Tickets: ${versionCards.length}\n`));
+        if (!isCIMode) {
+          console.log(chalk.green(`\n✅ Report generated!\n`));
+        }
+        const relativeFilePath = path.join(outputDir, filename);
+        console.log(`File: ${relativeFilePath}`);
+        console.log(`Tickets: ${versionCards.length}`);
         return;
       } else {
         // Generate breakdown report for all versions
@@ -1390,19 +1449,22 @@ async function generateReleaseNotes() {
 
         const timestamp = new Date().toISOString().split("T")[0];
         const filename = `report_release_version_breakdown_${selectedBoard.name.replace(/\s+/g, "_")}_${timestamp}.html`;
-        const filepath = path.join(process.cwd(), "output", "report", filename);
+        const filepath = path.join(process.cwd(), outputDir, filename);
 
-        if (!fs.existsSync(path.join(process.cwd(), "output", "report"))) {
-          fs.mkdirSync(path.join(process.cwd(), "output", "report"), { recursive: true });
+        if (!fs.existsSync(path.join(process.cwd(), outputDir))) {
+          fs.mkdirSync(path.join(process.cwd(), outputDir), { recursive: true });
         }
 
         fs.writeFileSync(filepath, breakdownHtml);
 
-        console.log(chalk.green(`\n✅ Report generated!\n`));
-        console.log(chalk.cyan(`📄 File: output/report/${filename}`));
-        console.log(chalk.cyan(`📊 Versions: ${versionList.length}`));
-        console.log(chalk.cyan(`📊 Tickets: ${Object.values(cardsByVersion).reduce((sum, cards) => sum + cards.length, 0)}`));
-        console.log(chalk.cyan(`📊 Unversioned: ${unversioned.length}\n`));
+        if (!isCIMode) {
+          console.log(chalk.green(`\n✅ Report generated!\n`));
+        }
+        const relativeFilePath = path.join(outputDir, filename);
+        console.log(`File: ${relativeFilePath}`);
+        console.log(`Versions: ${versionList.length}`);
+        console.log(`Tickets: ${Object.values(cardsByVersion).reduce((sum, cards) => sum + cards.length, 0)}`);
+        console.log(`Unversioned: ${unversioned.length}`);
         return;
       }
     } else if (reportType === "date-range") {
@@ -1568,38 +1630,79 @@ async function generateReleaseNotes() {
     const timestamp = new Date().toISOString().split("T")[0];
     const sanitizedTitle = reportTitle.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
     const filename = `report_${sanitizedTitle}_${selectedBoard.name.replace(/\s+/g, "_")}_${timestamp}.html`;
-    const filepath = path.join(process.cwd(), "output", "report", filename);
+    const filepath = path.join(process.cwd(), outputDir, filename);
 
-    if (!fs.existsSync(path.join(process.cwd(), "output", "report"))) {
-      fs.mkdirSync(path.join(process.cwd(), "output", "report"), { recursive: true });
+    if (!fs.existsSync(path.join(process.cwd(), outputDir))) {
+      fs.mkdirSync(path.join(process.cwd(), outputDir), { recursive: true });
     }
 
     fs.writeFileSync(filepath, html);
 
-    console.log(chalk.green(`\n✅ Report generated!\n`));
-    console.log(chalk.cyan(`📄 File: output/report/${filename}`));
-    console.log(chalk.cyan(`📊 Tickets: ${totalCards}`));
-    if (reportType === "date-range") {
-      console.log(chalk.cyan(`   Done: ${filteredDoneCards.length}`));
-    } else if (reportType === "release-ready") {
-      console.log(chalk.cyan(`   Ready to Release: ${filteredReadyCards.length} | Test in Progress: ${filteredTestInProgressCards.length}`));
-    } else if (reportType === "pending-release") {
-      console.log(chalk.cyan(`   Ready to Release (Pending): ${filteredReadyCards.length}`));
-    } else if (reportType === "bugs-by-product") {
-      const luxorFX = groupedReadyCards["Luxor FX"]?.length || 0;
-      const luxorDX = groupedReadyCards["Luxor DX"]?.length || 0;
-      const otherBugs = groupedReadyCards["Other Bugs"]?.length || 0;
-      console.log(chalk.cyan(`   Luxor FX: ${luxorFX} | Luxor DX: ${luxorDX} | Other: ${otherBugs}`));
-    } else if (reportType === "bugs-dx-only") {
-      const readyCount = filteredReadyCards.filter(c => c.source === "Ready to Release").length;
-      const testCount = filteredReadyCards.filter(c => c.source === "Test in Progress").length;
-      const readyToTestCount = filteredReadyCards.filter(c => c.source === "Ready to test").length;
-      console.log(chalk.cyan(`   Ready to Release: ${readyCount} | Test in Progress: ${testCount} | Ready to test: ${readyToTestCount}`));
+    // Output summary
+    const relativeFilePath = path.join(outputDir, filename);
+
+    if (isCIMode) {
+      // CI mode: structured output
+      console.log(`[SUCCESS] Report generated`);
+      console.log(`[OUTPUT] File=${relativeFilePath}`);
+      console.log(`[OUTPUT] Type=${reportType}`);
+      console.log(`[OUTPUT] Board=${selectedBoard.name}`);
+      console.log(`[OUTPUT] Tickets=${totalCards}`);
+      if (reportType === "date-range") {
+        console.log(`[OUTPUT] Done=${filteredDoneCards.length}`);
+      } else if (reportType === "release-ready") {
+        console.log(`[OUTPUT] ReadyToRelease=${filteredReadyCards.length}`);
+        console.log(`[OUTPUT] TestInProgress=${filteredTestInProgressCards.length}`);
+      } else if (reportType === "pending-release") {
+        console.log(`[OUTPUT] ReadyToReleasePending=${filteredReadyCards.length}`);
+      } else if (reportType === "bugs-by-product") {
+        const luxorFX = groupedReadyCards["Luxor FX"]?.length || 0;
+        const luxorDX = groupedReadyCards["Luxor DX"]?.length || 0;
+        const otherBugs = groupedReadyCards["Other Bugs"]?.length || 0;
+        console.log(`[OUTPUT] LuxorFX=${luxorFX}`);
+        console.log(`[OUTPUT] LuxorDX=${luxorDX}`);
+        console.log(`[OUTPUT] OtherBugs=${otherBugs}`);
+      } else if (reportType === "bugs-dx-only") {
+        const readyCount = filteredReadyCards.filter(c => c.source === "Ready to Release").length;
+        const testCount = filteredReadyCards.filter(c => c.source === "Test in Progress").length;
+        const readyToTestCount = filteredReadyCards.filter(c => c.source === "Ready to test").length;
+        console.log(`[OUTPUT] ReadyToRelease=${readyCount}`);
+        console.log(`[OUTPUT] TestInProgress=${testCount}`);
+        console.log(`[OUTPUT] ReadyToTest=${readyToTestCount}`);
+      }
+      console.log(`[OUTPUT] StartDate=${startDateStr}`);
+      console.log(`[OUTPUT] EndDate=${endDateStr}`);
+    } else {
+      // Interactive mode: user-friendly output with colors
+      console.log(chalk.green(`\n✅ Report generated!\n`));
+      console.log(chalk.cyan(`📄 File: ${relativeFilePath}`));
+      console.log(chalk.cyan(`📊 Tickets: ${totalCards}`));
+      if (reportType === "date-range") {
+        console.log(chalk.cyan(`   Done: ${filteredDoneCards.length}`));
+      } else if (reportType === "release-ready") {
+        console.log(chalk.cyan(`   Ready to Release: ${filteredReadyCards.length} | Test in Progress: ${filteredTestInProgressCards.length}`));
+      } else if (reportType === "pending-release") {
+        console.log(chalk.cyan(`   Ready to Release (Pending): ${filteredReadyCards.length}`));
+      } else if (reportType === "bugs-by-product") {
+        const luxorFX = groupedReadyCards["Luxor FX"]?.length || 0;
+        const luxorDX = groupedReadyCards["Luxor DX"]?.length || 0;
+        const otherBugs = groupedReadyCards["Other Bugs"]?.length || 0;
+        console.log(chalk.cyan(`   Luxor FX: ${luxorFX} | Luxor DX: ${luxorDX} | Other: ${otherBugs}`));
+      } else if (reportType === "bugs-dx-only") {
+        const readyCount = filteredReadyCards.filter(c => c.source === "Ready to Release").length;
+        const testCount = filteredReadyCards.filter(c => c.source === "Test in Progress").length;
+        const readyToTestCount = filteredReadyCards.filter(c => c.source === "Ready to test").length;
+        console.log(chalk.cyan(`   Ready to Release: ${readyCount} | Test in Progress: ${testCount} | Ready to test: ${readyToTestCount}`));
+      }
+      console.log(chalk.cyan(`📅 Period: ${startDateStr} to ${endDateStr}\n`));
     }
-    console.log(chalk.cyan(`📅 Period: ${startDateStr} to ${endDateStr}\n`));
 
   } catch (error) {
-    console.error(chalk.red(`❌ Error: ${error.message}`));
+    if (isCIMode) {
+      console.error(`[ERROR] ${error.message}`);
+    } else {
+      console.error(chalk.red(`❌ Error: ${error.message}`));
+    }
     process.exit(1);
   }
 }

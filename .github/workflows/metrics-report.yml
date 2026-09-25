@@ -1,0 +1,96 @@
+name: Generate Metrics Report
+
+on:
+  workflow_dispatch:
+    inputs:
+      report_type:
+        description: "Report type to generate"
+        required: true
+        default: "date-range"
+        type: choice
+        options:
+          - date-range
+          - release-ready
+          - pending-release
+          - bugs-by-product
+          - bugs-dx-only
+      start_date:
+        description: "Start date (YYYY-MM-DD) - required for date-range reports"
+        required: false
+        type: string
+      end_date:
+        description: "End date (YYYY-MM-DD) - required for date-range reports"
+        required: false
+        type: string
+      board_name:
+        description: "Board name (default: Hunter Luxor Migration)"
+        required: false
+        type: string
+      report_title:
+        description: "Report title (default: Annual Report)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.report_type }}" = "date-range" ]; then
+            if [ -z "${{ inputs.start_date }}" ] || [ -z "${{ inputs.end_date }}" ]; then
+              echo "❌ Error: date-range reports require both start_date and end_date"
+              exit 1
+            fi
+          fi
+
+      - name: Generate metrics report
+        env:
+          TRELLO_KEY: ${{ secrets.TRELLO_KEY }}
+          TRELLO_TOKEN: ${{ secrets.TRELLO_TOKEN }}
+        run: |
+          node src/main.js \
+            --type "${{ inputs.report_type }}" \
+            --output "reports/" \
+            ${{ inputs.start_date && format('--start {0}', inputs.start_date) || '' }} \
+            ${{ inputs.end_date && format('--end {0}', inputs.end_date) || '' }} \
+            ${{ inputs.board_name && format('--board {0}', inputs.board_name) || '' }} \
+            ${{ inputs.report_title && format('--title {0}', inputs.report_title) || '' }}
+
+      - name: Upload report artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-report-${{ github.run_number }}
+          path: reports/
+          retention-days: 90
+
+      - name: Commit report to repository
+        if: success()
+        run: |
+          git config user.name "Report Agent Bot"
+          git config user.email "report-agent@github.com"
+          git add reports/
+          git commit -m "📊 report: ${{ inputs.report_type }} (run #${{ github.run_number }})" || echo "No changes to commit"
+          git push
+
+      - name: Report generation failed
+        if: failure()
+        run: |
+          echo "❌ Report generation failed. Check the logs above for details."
+          exit 1

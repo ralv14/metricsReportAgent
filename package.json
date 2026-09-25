@@ -5,7 +5,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "report": "node src/main.js",
+    "report:date-range": "node src/main.js --type date-range --output reports/",
+    "report:release": "node src/main.js --type release-ready --output reports/",
+    "report:pending": "node src/main.js --type pending-release --output reports/",
+    "report:bugs": "node src/main.js --type bugs-by-product --output reports/",
+    "report:dx-bugs": "node src/main.js --type bugs-dx-only --output reports/",
+    "report:version": "node src/main.js --type release-version --output reports/",
+    "report:version-breakdown": "node src/main.js --type release-version-breakdown --output reports/"
   },
   "keywords": [],
   "author": "",
