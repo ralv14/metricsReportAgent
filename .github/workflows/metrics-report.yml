@@ -17,11 +17,15 @@ on:
           - Release Version Report
           - Release Version Breakdown
       start_date:
-        description: "Start date (YYYY-MM-DD) - required for date-range reports"
+        description: "[Date Range Report ONLY] Start date in YYYY-MM-DD format"
         required: false
         type: string
       end_date:
-        description: "End date (YYYY-MM-DD) - required for date-range reports"
+        description: "[Date Range Report ONLY] End date in YYYY-MM-DD format"
+        required: false
+        type: string
+      version:
+        description: "[Release Version Report ONLY] Release version (e.g., 4.6.29)"
         required: false
         type: string
       board_name:
@@ -30,10 +34,6 @@ on:
         type: string
       report_title:
         description: "Report title (default: Annual Report)"
-        required: false
-        type: string
-      version:
-        description: "Release version (required for release-version report type)"
         required: false
         type: string
 
@@ -72,9 +72,19 @@ jobs:
 
       - name: Validate inputs
         run: |
-          if [ "${{ steps.convert_type.outputs.type }}" = "date-range" ]; then
+          REPORT_TYPE="${{ steps.convert_type.outputs.type }}"
+
+          if [ "$REPORT_TYPE" = "date-range" ]; then
             if [ -z "${{ inputs.start_date }}" ] || [ -z "${{ inputs.end_date }}" ]; then
-              echo "❌ Error: date-range reports require both start_date and end_date"
+              echo "❌ ERROR: Date Range Report requires BOTH start_date and end_date"
+              echo "   Format: YYYY-MM-DD (e.g., 2024-01-01)"
+              exit 1
+            fi
+          fi
+
+          if [ "$REPORT_TYPE" = "release-version" ]; then
+            if [ -z "${{ inputs.version }}" ]; then
+              echo "❌ ERROR: Release Version Report requires version (e.g., 4.6.29)"
               exit 1
             fi
           fi
