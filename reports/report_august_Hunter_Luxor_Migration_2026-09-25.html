@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>August - Hunter Luxor Migration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #ffffff;
+            color: #1f2937;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: white;
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .hero .date {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        section {
+            padding: 60px 40px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        section h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: #111827;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 40px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 40px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+
+        .breakdown-item {
+            border-radius: 12px;
+            padding: 32px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 5px solid #e5e7eb;
+        }
+
+        .breakdown-item h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .breakdown-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .breakdown-item.bugs {
+            border-left-color: #ef4444;
+        }
+
+        .breakdown-item.bugs .breakdown-number {
+            color: #dc2626;
+        }
+
+        .breakdown-item.features {
+            border-left-color: #22c55e;
+        }
+
+        .breakdown-item.features .breakdown-number {
+            color: #16a34a;
+        }
+
+        .breakdown-item.improvements {
+            border-left-color: #f59e0b;
+        }
+
+        .breakdown-item.improvements .breakdown-number {
+            color: #d97706;
+        }
+
+        .breakdown-item.other {
+            border-left-color: #8b5cf6;
+        }
+
+        .breakdown-item.other .breakdown-number {
+            color: #7c3aed;
+        }
+
+        .breakdown-description {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .items-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .item {
+            font-size: 13px;
+            color: #374151;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .item-number {
+            font-weight: 700;
+            color: #9ca3af;
+            flex-shrink: 0;
+            min-width: 28px;
+        }
+
+        .item-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-date {
+            color: #9ca3af;
+            font-size: 12px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .section-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 40px 0 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
+            border-radius: 12px;
+            padding: 40px;
+            border-left: 4px solid #0f172a;
+            margin: 40px 0;
+        }
+
+        .summary h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+
+        .summary p {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        footer {
+            background: #f9fafb;
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .stats-grid, .breakdown { grid-template-columns: 1fr; }
+            section { padding: 40px 20px; }
+        }
+
+        @page {
+            size: A4;
+            margin: 0.5in 0.5in 0.5in 0.5in;
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
+            @bottom-right { content: ""; }
+            @top-left { content: ""; }
+            @top-center { content: ""; }
+            @top-right { content: ""; }
+        }
+
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            html {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+
+            .hero {
+                page-break-after: avoid;
+                padding: 40px 20px;
+            }
+
+            .hero h1 {
+                font-size: 28pt;
+                margin-bottom: 8px;
+            }
+
+            .hero p {
+                font-size: 14pt;
+                margin-bottom: 4px;
+            }
+
+            .hero .date {
+                font-size: 11pt;
+                margin-top: 8px;
+            }
+
+            section {
+                padding: 20px;
+                border-bottom: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+
+            section h2 {
+                font-size: 18pt;
+                margin-bottom: 16px;
+                margin-top: 0;
+                page-break-after: avoid;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+                background: #f0f0f0;
+                padding: 16px;
+                page-break-inside: avoid;
+            }
+
+            .stat {
+                page-break-inside: avoid;
+            }
+
+            .stat-value {
+                font-size: 24pt;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 10pt;
+            }
+
+            .breakdown {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                page-break-inside: avoid;
+            }
+
+            .breakdown-item {
+                border-radius: 0;
+                padding: 12px;
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+            }
+
+            .breakdown-item h3 {
+                font-size: 14pt;
+                margin-bottom: 8px;
+            }
+
+            .breakdown-number {
+                font-size: 32pt;
+                margin-bottom: 4px;
+            }
+
+            .breakdown-description {
+                font-size: 10pt;
+            }
+
+            .section-header {
+                font-size: 12pt;
+                font-weight: 700;
+                margin: 12px 0 8px 0;
+                padding-bottom: 4px;
+                border-bottom: 1px solid #ccc;
+                page-break-after: avoid;
+            }
+
+            .items-list {
+                page-break-inside: avoid;
+            }
+
+            .item {
+                font-size: 10pt;
+                padding: 6px;
+                margin-bottom: 4px;
+                border: none;
+                background: white;
+                page-break-inside: avoid;
+            }
+
+            .item-number {
+                min-width: 20px;
+                font-size: 9pt;
+            }
+
+            .item-text {
+                font-size: 10pt;
+            }
+
+            .item-date {
+                font-size: 9pt;
+                white-space: nowrap;
+            }
+
+            .summary {
+                background: #f0f0f0;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+
+            .summary h3 {
+                font-size: 14pt;
+                margin-bottom: 8px;
+            }
+
+            .summary p {
+                font-size: 11pt;
+                margin-bottom: 6px;
+            }
+
+            footer {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>August</h1>
+        <p>Hunter Luxor Migration</p>
+        <div class="date">2026-08-01 — 2026-09-25</div>
+    </div>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section>
+            <h2>Executive Summary</h2>
+            <div class="stats-grid" style="">
+                <div class="stat">
+                    <div class="stat-value">96</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-value">46</div>
+                    <div class="stat-label">Bugs Fixed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">14</div>
+                    <div class="stat-label">Features Added</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">17</div>
+                    <div class="stat-label">Improvements</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">19</div>
+                    <div class="stat-label">Other</div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Overview Section -->
+        <section>
+            <h2>Overview</h2>
+            
+            <div class="breakdown">
+                <div class="breakdown-item bugs">
+                    <div class="breakdown-number">46</div>
+                    <h3>Bug Fixes</h3>
+                    <p class="breakdown-description">Critical and high-severity issues resolved. Items tracked with PRD- identifiers or numbered tickets.</p>
+                </div>
+
+                <div class="breakdown-item features">
+                    <div class="breakdown-number">14</div>
+                    <h3>Features</h3>
+                    <p class="breakdown-description">New functionality and system additions.</p>
+                </div>
+
+                <div class="breakdown-item improvements">
+                    <div class="breakdown-number">17</div>
+                    <h3>Improvements</h3>
+                    <p class="breakdown-description">UI/UX updates and optimizations.</p>
+                </div>
+
+                <div class="breakdown-item other">
+                    <div class="breakdown-number">19</div>
+                    <h3>Other</h3>
+                    <p class="breakdown-description">Additional improvements and updates.</p>
+                </div>
+            </div>
+            
+
+            <div class="section-header">Bug Fixes (46)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text">PRD-143 [iOS][High] Image options hidden in theme edit screen</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">2</span>
+                <span class="item-text">PRD-142 [Both][Medium] Fixture lights do not reflect intensity changes when there is an active theme</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">3</span>
+                <span class="item-text">PRD-100 UI Freezes After Dismissing &quot;File Name&quot; Pop-up via Backdrop Click</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">4</span>
+                <span class="item-text">PRD-22 Loading never stop in assign lights screen when controllers are disconnected.</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">5</span>
+                <span class="item-text">PRD-141 [Android][Low] Text &#039;No Color&#039; is too close to line separation</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">6</span>
+                <span class="item-text">PRD-140 [Both][Critical] Application crashes after returning to Network Mode without a connected controller</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">7</span>
+                <span class="item-text">PRD-30 App crash after socket get closed</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">8</span>
+                <span class="item-text">PRD-139 [Both][Critical] App crashes after refreshing controller list in demo mode</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">9</span>
+                <span class="item-text">PRD-133 [Both][High] Cannot Save Group due to missing Name and Color fields, even when they are populated</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">10</span>
+                <span class="item-text">PRD-137 [Both][High] Demo Mode features persist after returning to Network Mode</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">11</span>
+                <span class="item-text">PRD-135 [Both][High] Theme name in schedule created by wizard reverts after refresh or app restart</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">12</span>
+                <span class="item-text">PRD-128 [Both][High] Extracted colors do not match visually selected colors</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">13</span>
+                <span class="item-text">PRD-118 Inconsistent border rendering for group names in Groups tab</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">14</span>
+                <span class="item-text">PRD-145 [Both][Medium] Generate theme screen is empty</span>
+                <span class="item-date">Aug 5, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">15</span>
+                <span class="item-text">PRD-144 [both][High] Unable to delete a lighting event when multiple events exist in a program.</span>
+                <span class="item-date">Aug 5, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">16</span>
+                <span class="item-text">PRD-17 Handle controller disconnection gracefully</span>
+                <span class="item-date">Aug 5, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">17</span>
+                <span class="item-text">PRD-152  DX/Disabling a scene turns off all active zones regardless of other active scenes</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">18</span>
+                <span class="item-text">PRD-160 [Both][High] Schedule list appears empty after selecting a site and navigating to the schedule tab</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">19</span>
+                <span class="item-text">PRD-158 [Both][Medium] Wizard unexpectedly appears after adding a controller to a new DX site</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">20</span>
+                <span class="item-text">PRD-169 [Both][Medium] Group names disappear after applying a theme in demo mode</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">21</span>
+                <span class="item-text">PRD-170 [Both][Low] Chassis load status text is not divided by 10</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">22</span>
+                <span class="item-text">PRD-168 [Both][High] Return to Network Mode does not function correctly from Change Account screen</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">23</span>
+                <span class="item-text">PRD-166 [Both][Medium] UI minor Issues and missing email in created backups for Site Information - UI Redesign</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">24</span>
+                <span class="item-text">PRD-167 [Both][Low] Unnecessary back button displayed on Sign In screen</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">25</span>
+                <span class="item-text">PRD-162 Enhancement: Add Spacing Between Theme Name and Favorites Label</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">26</span>
+                <span class="item-text">PRD-164 [Both] UI Issues in Select Color Screen</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">27</span>
+                <span class="item-text">PRD-165 [Both][Medium] Missing controller data in Controller List detail view - UI Redesign</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">28</span>
+                <span class="item-text">PRD-163 [Both][Low] Group card border spacing is too large in theme details</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">29</span>
+                <span class="item-text">PRD-164 [Both][Low] Pencil icon is too small in Area details on Android</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">30</span>
+                <span class="item-text">PRD-159 [Both][High] Creating a second event instead of returning to the event list after editing lights and intensity</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">31</span>
+                <span class="item-text">PRD-165 DX/[Both][High] Intensity setting is not saved correctly for OFF or intensities less than 100% events</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">32</span>
+                <span class="item-text">PRD-151 DX/ [Both][High] Scene toggle does not update status after turning off all lights</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">33</span>
+                <span class="item-text">PRD-157 DX/[Both][High] Zone List Not Displaying on Dashboard After Site Switch</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">34</span>
+                <span class="item-text">PRD-154 DX / [iOS][Critical] App crashes when attempting to delete a site after logging into Luxor Cloud</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">35</span>
+                <span class="item-text">PRD-153 DX / [Both][Critical] Mobile application crashes when transitioning to Network mode</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">36</span>
+                <span class="item-text">PRD-149 [Both][Critical] Application crashes when adding a third event to a new program</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">37</span>
+                <span class="item-text">PRD-150 [Both][High] Editing an event results in a new event being created instead of updating the existing one</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">38</span>
+                <span class="item-text">PRD-125 [Both][Medium] Edit option for area cards is hidden by &#039;+&#039; button when more than 2 areas exist</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">39</span>
+                <span class="item-text">PRD-138 [iOS][Medium] Groups list not populated in iOS app</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">40</span>
+                <span class="item-text">PRD-136 [Both][High] Area intensity does not update correctly when multiple group intensities are changed.</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">41</span>
+                <span class="item-text">PRD-134 [Both][Medium] Floating button from Group list remains visible in Area list</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">42</span>
+                <span class="item-text">PRD-132 [Both][High] Toggling a group causes other groups to toggle unintentionally after open an area card</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">43</span>
+                <span class="item-text">PRD-123 [Both][High] Schedules do not execute when &#039;Estimated Visual Sunset&#039; is enabled</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">44</span>
+                <span class="item-text">PRD-148 lxzdc / Sort themes are not working</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">45</span>
+                <span class="item-text">PRD-146 DX / When scenes turn on zones are not reflecting changes from Dashboard</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">46</span>
+                <span class="item-text">PRD-147 DX / All Lights Button and turn on Scenes are not sync</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div></div><div class="section-header">New Features (14)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text">Implement Cloud Info Icon with Textbox</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">2</span>
+                <span class="item-text">Implement &#039;Off&#039; Event Validation Popup</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">3</span>
+                <span class="item-text">Implement Estimated Visual Sunset automatic override scheduling</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">4</span>
+                <span class="item-text">Add &quot;Visual Sunset&quot;, &quot;Area&quot; and Firmware Pages to &quot;What&#039;s New&quot; Carousel</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">5</span>
+                <span class="item-text">Add Notes field into General section in Controller List</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">6</span>
+                <span class="item-text">DX Schedules: add &quot;All Zones&quot; option to Zone/Scene picker</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">7</span>
+                <span class="item-text">Add a toggle in Preferences to show or hide the Areas section</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">8</span>
+                <span class="item-text">Implement Area UI prototype changes</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">9</span>
+                <span class="item-text">Areas View UI Enhancements &amp; Add Group Button Re-ordering</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">10</span>
+                <span class="item-text">Add a new section to manage Areas</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">11</span>
+                <span class="item-text">lxzdc - Add a restriction of total of group allowed for Themes details</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">12</span>
+                <span class="item-text">DX - Add spinning wheel to scenes.</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">13</span>
+                <span class="item-text">DX - Add a default image for Dashboard</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">14</span>
+                <span class="item-text">Add the ability of update firmware controller from the app</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div></div><div class="section-header">Improvements (17)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text">Update WhatsNew View</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">2</span>
+                <span class="item-text">Schedules Changes</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">3</span>
+                <span class="item-text">Schedule UI Change</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">4</span>
+                <span class="item-text">Schedules Section - Feedback</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">5</span>
+                <span class="item-text">Match Thickness and color between Group and Theme cards</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">6</span>
+                <span class="item-text">Remove orange bar from all cards in Groups, Themes, Favorites and Schedules</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">7</span>
+                <span class="item-text">Update text for Preferences options - Requested by James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">8</span>
+                <span class="item-text">Update Firmware font - Requested by James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">9</span>
+                <span class="item-text">Change the dialog message when the area has no groups and update the default name for the first area - Requested by James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">10</span>
+                <span class="item-text">Area with no Groups can still be toggled and dimmed - Requested by James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">11</span>
+                <span class="item-text">Redesign UI</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">12</span>
+                <span class="item-text">Themes / Remove Deleted Groups from Themes</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">13</span>
+                <span class="item-text">DX Plus Sites Orange label color</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">14</span>
+                <span class="item-text">Easily Rename Themes</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">15</span>
+                <span class="item-text">Improve highlighted border for backup list in Android</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">16</span>
+                <span class="item-text">Update the logo from Luxor to FX</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">17</span>
+                <span class="item-text">Feedback from James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div></div><div class="section-header">Other (19)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text">Integrate Special Event Editing Flow</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">2</span>
+                <span class="item-text">Reorder Event Selection List to Prioritize Themes</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">3</span>
+                <span class="item-text">Display Event Dates in Schedule List</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">4</span>
+                <span class="item-text">Demo Mode functionality</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">5</span>
+                <span class="item-text">Update what&#039;s new screen</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">6</span>
+                <span class="item-text">Redesign Schedule UI workflow</span>
+                <span class="item-date">Aug 4, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">7</span>
+                <span class="item-text">Center the power button in dashboard tab for DX Controllers</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">8</span>
+                <span class="item-text">Hide Visual Sunset and Area toggles from Preference in Demo Mode</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">9</span>
+                <span class="item-text">Hide the group capability badge (Z/ZD/ZDC) across the app - Requested by James</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">10</span>
+                <span class="item-text">DX - Assign Default Names to Unnamed DX Controller Zones</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">11</span>
+                <span class="item-text">lxzdc - Remove ColorWheel from Color tab</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">12</span>
+                <span class="item-text">DX: Hide LXTWO-only menu options (System Setup, Quick Theme) + fix Scenes tab icon</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">13</span>
+                <span class="item-text">Match Luxor App UI style with Schedule tab UI design</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">14</span>
+                <span class="item-text">Demo Mode - Phase 2</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">15</span>
+                <span class="item-text">Login screen redesign</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">16</span>
+                <span class="item-text">Cloud Watch / Cloud data load fails — InvalidOperation_EnumFailedVersion on ColorDTO list</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">17</span>
+                <span class="item-text">DX - Assign Scene to all light button from preference</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">18</span>
+                <span class="item-text">DX - Power Button Default Option to Turn All Zones On to 100%</span>
+                <span class="item-date">Sep 24, 2026</span>
+            </div>
+            <div class="item">
+                <span class="item-number">19</span>
+                <span class="item-text">Configure controller to investigate verification code issue</span>
+                <span class="item-date">Sep 25, 2026</span>
+            </div></div>
+        </section>
+
+        <!-- Summary -->
+        <section>
+            <div class="summary">
+                <h3>Summary</h3>
+                <p><strong>Period:</strong> 2026-08-01 — 2026-09-25</p>
+                <p><strong>Total Items:</strong> 96</p>
+                <p><strong>Completed (Done):</strong> 96</p>
+                <p><strong>Ready to Release:</strong> 0 (0 pending)</p>
+                
+                <p><strong>Breakdown:</strong> 46 bugs fixed | 14 features added | 17 improvements | 19 other items</p>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 16px;">✅ Breakdown adds up to Total Items: 96 = 96</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
