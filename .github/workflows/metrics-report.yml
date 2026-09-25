@@ -52,6 +52,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clean reports directory
+        run: rm -rf reports/ && mkdir -p reports/
+
       - name: Convert report type to CLI value
         id: convert_type
         run: |
