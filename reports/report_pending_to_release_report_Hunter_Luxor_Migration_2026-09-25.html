@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending to Release Report - Hunter Luxor Migration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #ffffff;
+            color: #1f2937;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: white;
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .hero .date {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        section {
+            padding: 60px 40px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        section h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            color: #111827;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 32px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 40px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 40px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+
+        .breakdown-item {
+            border-radius: 12px;
+            padding: 32px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-left: 5px solid #e5e7eb;
+        }
+
+        .breakdown-item h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .breakdown-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .breakdown-item.bugs {
+            border-left-color: #ef4444;
+        }
+
+        .breakdown-item.bugs .breakdown-number {
+            color: #dc2626;
+        }
+
+        .breakdown-item.features {
+            border-left-color: #22c55e;
+        }
+
+        .breakdown-item.features .breakdown-number {
+            color: #16a34a;
+        }
+
+        .breakdown-item.improvements {
+            border-left-color: #f59e0b;
+        }
+
+        .breakdown-item.improvements .breakdown-number {
+            color: #d97706;
+        }
+
+        .breakdown-item.other {
+            border-left-color: #8b5cf6;
+        }
+
+        .breakdown-item.other .breakdown-number {
+            color: #7c3aed;
+        }
+
+        .breakdown-description {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .items-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .item {
+            font-size: 13px;
+            color: #374151;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .item-number {
+            font-weight: 700;
+            color: #9ca3af;
+            flex-shrink: 0;
+            min-width: 28px;
+        }
+
+        .item-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-date {
+            color: #9ca3af;
+            font-size: 12px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .section-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 40px 0 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%);
+            border-radius: 12px;
+            padding: 40px;
+            border-left: 4px solid #0f172a;
+            margin: 40px 0;
+        }
+
+        .summary h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+
+        .summary p {
+            font-size: 14px;
+            color: #374151;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        footer {
+            background: #f9fafb;
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .stats-grid, .breakdown { grid-template-columns: 1fr; }
+            section { padding: 40px 20px; }
+        }
+
+        @page {
+            size: A4;
+            margin: 0.5in 0.5in 0.5in 0.5in;
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
+            @bottom-right { content: ""; }
+            @top-left { content: ""; }
+            @top-center { content: ""; }
+            @top-right { content: ""; }
+        }
+
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            html {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+
+            .hero {
+                page-break-after: avoid;
+                padding: 40px 20px;
+            }
+
+            .hero h1 {
+                font-size: 28pt;
+                margin-bottom: 8px;
+            }
+
+            .hero p {
+                font-size: 14pt;
+                margin-bottom: 4px;
+            }
+
+            .hero .date {
+                font-size: 11pt;
+                margin-top: 8px;
+            }
+
+            section {
+                padding: 20px;
+                border-bottom: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+
+            section h2 {
+                font-size: 18pt;
+                margin-bottom: 16px;
+                margin-top: 0;
+                page-break-after: avoid;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+                background: #f0f0f0;
+                padding: 16px;
+                page-break-inside: avoid;
+            }
+
+            .stat {
+                page-break-inside: avoid;
+            }
+
+            .stat-value {
+                font-size: 24pt;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 10pt;
+            }
+
+            .breakdown {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                page-break-inside: avoid;
+            }
+
+            .breakdown-item {
+                border-radius: 0;
+                padding: 12px;
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+            }
+
+            .breakdown-item h3 {
+                font-size: 14pt;
+                margin-bottom: 8px;
+            }
+
+            .breakdown-number {
+                font-size: 32pt;
+                margin-bottom: 4px;
+            }
+
+            .breakdown-description {
+                font-size: 10pt;
+            }
+
+            .section-header {
+                font-size: 12pt;
+                font-weight: 700;
+                margin: 12px 0 8px 0;
+                padding-bottom: 4px;
+                border-bottom: 1px solid #ccc;
+                page-break-after: avoid;
+            }
+
+            .items-list {
+                page-break-inside: avoid;
+            }
+
+            .item {
+                font-size: 10pt;
+                padding: 6px;
+                margin-bottom: 4px;
+                border: none;
+                background: white;
+                page-break-inside: avoid;
+            }
+
+            .item-number {
+                min-width: 20px;
+                font-size: 9pt;
+            }
+
+            .item-text {
+                font-size: 10pt;
+            }
+
+            .item-date {
+                font-size: 9pt;
+                white-space: nowrap;
+            }
+
+            .summary {
+                background: #f0f0f0;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+
+            .summary h3 {
+                font-size: 14pt;
+                margin-bottom: 8px;
+            }
+
+            .summary p {
+                font-size: 11pt;
+                margin-bottom: 6px;
+            }
+
+            footer {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>Pending to Release Report</h1>
+        <p>Hunter Luxor Migration</p>
+        <div class="date">2026-09-25</div>
+    </div>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section>
+            <h2>Executive Summary</h2>
+            <div class="stats-grid" style="">
+                <div class="stat">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                
+                <div class="stat">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Bugs Fixed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Features Added</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Improvements</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Other</div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Overview Section -->
+        <section>
+            <h2>Overview</h2>
+            
+            <div class="breakdown">
+                <div class="breakdown-item bugs">
+                    <div class="breakdown-number">0</div>
+                    <h3>Bug Fixes</h3>
+                    <p class="breakdown-description">Critical and high-severity issues resolved. Items tracked with PRD- identifiers or numbered tickets.</p>
+                </div>
+
+                <div class="breakdown-item features">
+                    <div class="breakdown-number">1</div>
+                    <h3>Features</h3>
+                    <p class="breakdown-description">New functionality and system additions.</p>
+                </div>
+
+                <div class="breakdown-item improvements">
+                    <div class="breakdown-number">0</div>
+                    <h3>Improvements</h3>
+                    <p class="breakdown-description">UI/UX updates and optimizations.</p>
+                </div>
+
+                <div class="breakdown-item other">
+                    <div class="breakdown-number">2</div>
+                    <h3>Other</h3>
+                    <p class="breakdown-description">Additional improvements and updates.</p>
+                </div>
+            </div>
+            
+
+            <div class="section-header">New Features (1)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text"><span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 6px;">pending</span>Update LumaKey Firmware</span>
+                <span class="item-date">May 15, 2026</span>
+            </div></div><div class="section-header">Other (2)</div><div class="items-list">
+            <div class="item">
+                <span class="item-number">1</span>
+                <span class="item-text"><span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 6px;">pending</span>Assign Lights / Update Edit Assignments screen.</span>
+                <span class="item-date">Oct 3, 2025</span>
+            </div>
+            <div class="item">
+                <span class="item-number">2</span>
+                <span class="item-text"><span style="background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 6px; font-size: 10px; margin-right: 6px;">pending</span>Provisioning through Direct Connect mode</span>
+                <span class="item-date">Sep 18, 2026</span>
+            </div></div>
+        </section>
+
+        <!-- Summary -->
+        <section>
+            <div class="summary">
+                <h3>Summary</h3>
+                
+                <p><strong>Total Items:</strong> 3</p>
+                <p><strong>Completed (Done):</strong> 0</p>
+                <p><strong>Ready to Release:</strong> 3 (3 pending)</p>
+                
+                <p><strong>Breakdown:</strong> 0 bugs fixed | 1 features added | 0 improvements | 2 other items</p>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 16px;">✅ Breakdown adds up to Total Items: 3 = 3</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
