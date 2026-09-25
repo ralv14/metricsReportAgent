@@ -1237,14 +1237,12 @@ async function generateReleaseNotes(options) {
 
     // Step 2: Select board
     if (isCIMode) {
-      // CI mode: find board by name
-      const boardName = options.board || "Hunter Luxor Migration";
-      selectedBoard = boards.find(b => b.name === boardName);
+      // CI mode: use default board directly (Hunter Luxor Migration)
+      const defaultBoardName = "Hunter Luxor Migration";
+      selectedBoard = boards.find(b => b.name === defaultBoardName);
       if (!selectedBoard) {
-        throw new Error(`Board not found: ${boardName}`);
-      }
-      if (!isCIMode) {
-        console.log(chalk.green(`✅ Selected: ${selectedBoard.name}\n`));
+        const availableBoards = boards.map(b => b.name).join(", ");
+        throw new Error(`Default board not found: "${defaultBoardName}". Available boards: ${availableBoards}`);
       }
     } else {
       // Interactive mode: prompt user

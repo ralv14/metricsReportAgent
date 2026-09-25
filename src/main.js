@@ -35,7 +35,6 @@ async function main() {
       // CI mode: require type argument
       const options = {
         type: args.type,
-        board: args.board || "Hunter Luxor Migration",
         startDate: args.start,
         endDate: args.end,
         outputDir: args.output || "reports/",

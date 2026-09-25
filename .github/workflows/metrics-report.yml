@@ -28,10 +28,6 @@ on:
         description: "[Release Version Report ONLY] Release version (e.g., 4.6.29)"
         required: false
         type: string
-      board_name:
-        description: "Board name (default: Hunter Luxor Migration)"
-        required: false
-        type: string
       report_title:
         description: "Report title (default: Annual Report)"
         required: false
@@ -99,7 +95,6 @@ jobs:
             --output "reports/" \
             ${{ inputs.start_date && format('--start {0}', inputs.start_date) || '' }} \
             ${{ inputs.end_date && format('--end {0}', inputs.end_date) || '' }} \
-            ${{ inputs.board_name && format('--board {0}', inputs.board_name) || '' }} \
             ${{ inputs.report_title && format('--title {0}', inputs.report_title) || '' }} \
             ${{ inputs.version && format('--version {0}', inputs.version) || '' }}
 
