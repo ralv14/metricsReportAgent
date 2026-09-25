@@ -95,7 +95,7 @@ jobs:
             --output "reports/" \
             ${{ inputs.start_date && format('--start {0}', inputs.start_date) || '' }} \
             ${{ inputs.end_date && format('--end {0}', inputs.end_date) || '' }} \
-            ${{ inputs.report_title && format('--title {0}', inputs.report_title) || '' }} \
+            ${{ inputs.report_title && format('--title "{0}"', inputs.report_title) || '' }} \
             ${{ inputs.version && format('--version {0}', inputs.version) || '' }}
 
       - name: Upload report artifacts
@@ -103,7 +103,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: metrics-report-${{ github.run_number }}
-          path: reports/
+          path: reports/*
           retention-days: 90
 
       - name: Commit report to repository
