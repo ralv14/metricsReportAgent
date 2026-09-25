@@ -30,6 +30,10 @@ on:
         description: "Report title (default: Annual Report)"
         required: false
         type: string
+      version:
+        description: "Release version (required for release-version report type)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -70,7 +74,8 @@ jobs:
             ${{ inputs.start_date && format('--start {0}', inputs.start_date) || '' }} \
             ${{ inputs.end_date && format('--end {0}', inputs.end_date) || '' }} \
             ${{ inputs.board_name && format('--board {0}', inputs.board_name) || '' }} \
-            ${{ inputs.report_title && format('--title {0}', inputs.report_title) || '' }}
+            ${{ inputs.report_title && format('--title {0}', inputs.report_title) || '' }} \
+            ${{ inputs.version && format('--version {0}', inputs.version) || '' }}
 
       - name: Upload report artifacts
         if: success()

@@ -39,7 +39,8 @@ async function main() {
         startDate: args.start,
         endDate: args.end,
         outputDir: args.output || "reports/",
-        title: args.title || "Annual Report"
+        title: args.title || "Annual Report",
+        version: args.version
       };
 
       await generateReleaseNotes(options);

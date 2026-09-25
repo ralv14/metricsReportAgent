@@ -1408,19 +1408,33 @@ async function generateReleaseNotes(options) {
 
       if (reportType === "release-version") {
         // Select a specific version
-        const { selectedVersion } = await inquirer.prompt([
-          {
-            type: "select",
-            name: "selectedVersion",
-            message: "Select release version:",
-            choices: versionList.map(v => ({
-              name: `${v}   ${cardsByVersion[v].length} tickets`,
-              value: v
-            }))
-          }
-        ]);
+        let selectedVersion;
 
-        console.log(chalk.green(`✅ Selected version: ${selectedVersion}\n`));
+        if (isCIMode && options.version) {
+          // CI mode: use provided version
+          selectedVersion = options.version;
+          if (!versionList.includes(selectedVersion)) {
+            throw new Error(`Version "${selectedVersion}" not found. Available versions: ${versionList.join(", ")}`);
+          }
+        } else if (isCIMode) {
+          // CI mode without version specified
+          throw new Error(`Release version report requires --version argument. Available versions: ${versionList.join(", ")}`);
+        } else {
+          // Interactive mode: prompt user
+          const { selected } = await inquirer.prompt([
+            {
+              type: "select",
+              name: "selected",
+              message: "Select release version:",
+              choices: versionList.map(v => ({
+                name: `${v}   ${cardsByVersion[v].length} tickets`,
+                value: v
+              }))
+            }
+          ]);
+          selectedVersion = selected;
+          console.log(chalk.green(`✅ Selected version: ${selectedVersion}\n`));
+        }
 
         // Generate single version report
         const versionCards = cardsByVersion[selectedVersion];

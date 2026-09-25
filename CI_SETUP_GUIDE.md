@@ -11,12 +11,13 @@ This guide explains how to set up GitHub Actions for on-demand report generation
 4. **package.json** - Added convenient npm scripts
 
 ### Key Features
-- ✅ **CI-friendly CLI** - Accepts `--type`, `--start`, `--end`, `--output`, `--board`, `--title`
+- ✅ **CI-friendly CLI** - Accepts `--type`, `--start`, `--end`, `--output`, `--board`, `--title`, `--version`
 - ✅ **Interactive mode preserved** - Run `node src/main.js` with no args for old behavior
 - ✅ **Manual trigger only** - Workflow uses `workflow_dispatch` (no automatic runs)
-- ✅ **Input validation** - Ensures date-range reports have start/end dates
+- ✅ **Input validation** - Ensures date-range reports have start/end dates, version reports have version
 - ✅ **Artifact upload** - Reports stored in GitHub with 90-day retention
 - ✅ **Auto-commit** - Reports committed back to repo (optional, can be disabled)
+- ✅ **Version reports supported** - Both release-version and release-version-breakdown
 
 ---
 
@@ -81,11 +82,11 @@ node src/main.js --type bugs-dx-only --output reports/
 npm run report:dx-bugs
 ```
 
-### Test Version Report
+### Test Version Report (with specific version)
 ```bash
-node src/main.js --type release-version --output reports/
-# Or:
-npm run report:version
+# First, the interactive mode will show you available versions
+# Or for CI mode, specify the version directly:
+node src/main.js --type release-version --version 4.6.29 --output reports/
 ```
 
 ### Test Version Breakdown
@@ -165,6 +166,21 @@ Run workflow with:
 - report_type: pending-release
 - report_title: Q4 2024 Release Pipeline
 - Leave date fields blank
+```
+
+### Scenario 4: Release Version Report
+```
+Run workflow with:
+- report_type: release-version
+- version: 4.6.29 (specify the version number)
+- Leave other fields blank
+```
+
+### Scenario 5: Release Version Breakdown
+```
+Run workflow with:
+- report_type: release-version-breakdown
+- Leave all other fields blank
 ```
 
 ---
@@ -247,8 +263,8 @@ node src/main.js --type bugs-by-product --output reports/
 # CI mode: DX bugs only
 node src/main.js --type bugs-dx-only --output reports/
 
-# CI mode: Release version
-node src/main.js --type release-version --output reports/
+# CI mode: Release version (requires --version)
+node src/main.js --type release-version --version 4.6.29 --output reports/
 
 # CI mode: Version breakdown
 node src/main.js --type release-version-breakdown --output reports/
