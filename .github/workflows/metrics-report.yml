@@ -6,14 +6,16 @@ on:
       report_type:
         description: "Report type to generate"
         required: true
-        default: "date-range"
+        default: "Date Range Report"
         type: choice
         options:
-          - date-range
-          - release-ready
-          - pending-release
-          - bugs-by-product
-          - bugs-dx-only
+          - Date Range Report
+          - Release Report
+          - Pending to Release Report
+          - Bugs Fixing Report
+          - Luxor DX Bugs Report
+          - Release Version Report
+          - Release Version Breakdown
       start_date:
         description: "Start date (YYYY-MM-DD) - required for date-range reports"
         required: false
@@ -54,9 +56,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Convert report type to CLI value
+        id: convert_type
+        run: |
+          case "${{ inputs.report_type }}" in
+            "Date Range Report") echo "type=date-range" >> $GITHUB_OUTPUT ;;
+            "Release Report") echo "type=release-ready" >> $GITHUB_OUTPUT ;;
+            "Pending to Release Report") echo "type=pending-release" >> $GITHUB_OUTPUT ;;
+            "Bugs Fixing Report") echo "type=bugs-by-product" >> $GITHUB_OUTPUT ;;
+            "Luxor DX Bugs Report") echo "type=bugs-dx-only" >> $GITHUB_OUTPUT ;;
+            "Release Version Report") echo "type=release-version" >> $GITHUB_OUTPUT ;;
+            "Release Version Breakdown") echo "type=release-version-breakdown" >> $GITHUB_OUTPUT ;;
+            *) echo "❌ Unknown report type: ${{ inputs.report_type }}" && exit 1 ;;
+          esac
+
       - name: Validate inputs
         run: |
-          if [ "${{ inputs.report_type }}" = "date-range" ]; then
+          if [ "${{ steps.convert_type.outputs.type }}" = "date-range" ]; then
             if [ -z "${{ inputs.start_date }}" ] || [ -z "${{ inputs.end_date }}" ]; then
               echo "❌ Error: date-range reports require both start_date and end_date"
               exit 1
@@ -69,7 +85,7 @@ jobs:
           TRELLO_TOKEN: ${{ secrets.TRELLO_TOKEN }}
         run: |
           node src/main.js \
-            --type "${{ inputs.report_type }}" \
+            --type "${{ steps.convert_type.outputs.type }}" \
             --output "reports/" \
             ${{ inputs.start_date && format('--start {0}', inputs.start_date) || '' }} \
             ${{ inputs.end_date && format('--end {0}', inputs.end_date) || '' }} \
