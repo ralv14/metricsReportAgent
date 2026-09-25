@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Version Report - 4.6.16</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; }
+        .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 60px 40px; text-align: center; }
+        .header h1 { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 18px; opacity: 0.9; }
+        .pill { display: inline-block; margin-top: 14px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .pill.prog { background: #fef3c7; color: #92400e; }
+        .pill.released { background: #dcfce7; color: #166534; }
+        .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+        .section { background: white; border-radius: 8px; margin-bottom: 30px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section h2 { font-size: 22px; font-weight: 700; padding: 20px; border-bottom: 1px solid #ecf0f1; color: #1e3c72; }
+        .section-content { padding: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+        .stat { text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px; }
+        .stat-value { font-size: 32px; font-weight: 700; color: #1e3c72; margin-bottom: 8px; }
+        .stat-label { font-size: 12px; color: #6b7280; font-weight: 600; }
+        .readiness { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; padding: 20px; }
+        .readiness-percent { font-size: 56px; font-weight: 700; color: #1e3c72; }
+        .readiness-bar { width: 100%; height: 22px; background: #f1f5f9; border-radius: 6px; overflow: hidden; }
+        .readiness-bar span { display: block; height: 100%; }
+        .bar-ready { background: #22c55e; }
+        .bar-pending { background: #f59e0b; }
+        .bar-test { background: #3b82f6; }
+        .legend { display: flex; gap: 20px; margin-top: 12px; font-size: 13px; color: #374151; }
+        .legend-item { display: flex; gap: 8px; align-items: center; }
+        .legend-color { width: 10px; height: 10px; border-radius: 2px; }
+        .items { display: grid; gap: 8px; }
+        .item { display: flex; gap: 12px; align-items: flex-start; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+        .item-number { font-weight: 700; color: #9ca3af; min-width: 24px; flex-shrink: 0; }
+        .item-text { flex: 1; color: #374151; }
+        .badge { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-ready { background: #dcfce7; color: #166534; }
+        .badge-test { background: #dbeafe; color: #1e40af; }
+        .summary { background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); border-left: 4px solid #1e3c72; border-radius: 8px; padding: 28px; margin-top: 30px; }
+        .summary h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #1e3c72; }
+        .summary p { font-size: 14px; color: #374151; line-height: 1.8; }
+        .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 12px; border-top: 1px solid #e5e7eb; }
+        .item.hidden { display: none; }
+        .expand-btn { display: block; padding: 12px; color: #2a5298; font-weight: 600; font-size: 13px; background: none; border: none; cursor: pointer; text-align: center; width: 100%; margin-top: 8px; }
+        .expand-btn:hover { color: #1e3a8a; text-decoration: underline; }
+    </style>
+    <script>
+        function toggleExpand(id) {
+            const items = document.querySelectorAll('[data-group="' + id + '"]');
+            const btn = document.getElementById('btn-' + id);
+            let hasHidden = false;
+            items.forEach(item => {
+                if (item.classList.contains('hidden')) {
+                    item.classList.remove('hidden');
+                    hasHidden = true;
+                }
+            });
+            if (hasHidden) {
+                btn.textContent = '▼ Collapse';
+            } else {
+                items.forEach((item, idx) => {
+                    if (idx >= 5) {
+                        item.classList.add('hidden');
+                    }
+                });
+                const extra = items.length - 5;
+                btn.textContent = extra > 0 ? '▶ Expand (' + extra + ' more)' : '';
+                if (extra === 0) btn.style.display = 'none';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="header">
+        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Release Version Report</div>
+        <h1>v4.6.16</h1>
+        <p>Hunter Luxor Migration</p>
+        <span class="pill released">Released, Sep 9, 2026</span>
+        <div style="font-size: 12px; opacity: 0.8; margin-top: 10px;">9/25/2026</div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <div class="section-content">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #dc2626;">13</div>
+                        <div class="stat-label">Bugs Fixed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #16a34a;">3</div>
+                        <div class="stat-label">Features Added</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #d97706;">5</div>
+                        <div class="stat-label">Improvements</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" style="color: #7c3aed;">3</div>
+                        <div class="stat-label">Other</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+        <div class="section">
+            <h2>Bug Fixes (13)</h2>
+            <div class="section-content">
+                <div class="items">
+                    
+                        <div class="item " data-group="bugs">
+                            <span class="item-number">1</span>
+                            <span class="item-text">PRD-08 Controller Time on App not Accurate with Controller Time on controller.</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="bugs">
+                            <span class="item-number">2</span>
+                            <span class="item-text">PRD-46 Themes Json is getting truncated and suddenly reproduce a crash.</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="bugs">
+                            <span class="item-number">3</span>
+                            <span class="item-text">PRD-54 Some text are not translated</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="bugs">
+                            <span class="item-number">4</span>
+                            <span class="item-text">PRD-55 Current Site name is not updated in the Dashboard</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="bugs">
+                            <span class="item-number">5</span>
+                            <span class="item-text">PRD-56 Events are not been visible after been created.</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">6</span>
+                            <span class="item-text">PRD-57 App crash after type a wrong password and click on Login button</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">7</span>
+                            <span class="item-text">PRD-58 Group colors on Theme Wizard is not that expected</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">8</span>
+                            <span class="item-text">PRD-59 Dashboard image is not showing up after close and open the app connected to cloud</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">9</span>
+                            <span class="item-text">PRD-61 Wizard turn on groups and Power button</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">10</span>
+                            <span class="item-text">PRD-63 Wizard / Set Groups in theme details to 100%</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">11</span>
+                            <span class="item-text">PRD-62 If a Theme has the All Lights name Old functionality get active and it doesn&#039;t see as a Theme for Power button</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">12</span>
+                            <span class="item-text">PRD-64 Power button on get transfer to a site with controller disconnected.</span>
+                            
+                        </div>
+                    
+                        <div class="item hidden" data-group="bugs">
+                            <span class="item-number">13</span>
+                            <span class="item-text">PRD-65 Assign Lights / Lights never turn on after click on Assign Light after theme was applied trough a schedule</span>
+                            
+                        </div>
+                    
+                    <button class="expand-btn" id="btn-bugs" onclick="toggleExpand('bugs')">▶ Expand (8 more)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>New Features (3)</h2>
+            <div class="section-content">
+                <div class="items">
+                    
+                        <div class="item " data-group="features">
+                            <span class="item-number">1</span>
+                            <span class="item-text">System Set up wizard</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="features">
+                            <span class="item-number">2</span>
+                            <span class="item-text">Allow to add name to programs for sites and save it into Cloud</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="features">
+                            <span class="item-number">3</span>
+                            <span class="item-text">Add Program Index below of the program title in schedule list</span>
+                            
+                        </div>
+                    
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Improvements (5)</h2>
+            <div class="section-content">
+                <div class="items">
+                    
+                        <div class="item " data-group="improvements">
+                            <span class="item-number">1</span>
+                            <span class="item-text">Change Skip Wizard for Stop Wizard or another word across all wizard screens</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="improvements">
+                            <span class="item-number">2</span>
+                            <span class="item-text">Update Wizard Screen</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="improvements">
+                            <span class="item-number">3</span>
+                            <span class="item-text">Update Modal Dialog for &quot;No Power Button Option Selected&quot; warning</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="improvements">
+                            <span class="item-number">4</span>
+                            <span class="item-text">Update Modal Dialog for &quot;Enable Remote Access&quot; adding &quot;LEARN MORE&quot; option and changing button styles.</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="improvements">
+                            <span class="item-number">5</span>
+                            <span class="item-text">Update Whats New Page</span>
+                            
+                        </div>
+                    
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Other (3)</h2>
+            <div class="section-content">
+                <div class="items">
+                    
+                        <div class="item " data-group="other">
+                            <span class="item-number">1</span>
+                            <span class="item-text">Update Google requirements</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="other">
+                            <span class="item-number">2</span>
+                            <span class="item-text">Wizard Part 2</span>
+                            
+                        </div>
+                    
+                        <div class="item " data-group="other">
+                            <span class="item-number">3</span>
+                            <span class="item-text">Improve Login and Logout / Share Sites</span>
+                            
+                        </div>
+                    
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="summary">
+            <h3>Summary</h3>
+            <p>v4.6.16 contains 24 tickets: 13 bug fixes, 3 features, 5 improvements and 3 other items. 0 are in Ready to Release and 24 are in Done.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        Hunter Luxor Migration · Release Version Report · v4.6.16
+    </div>
+</body>
+</html>
